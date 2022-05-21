@@ -1,9 +1,27 @@
 <script>
-	let data = []; // Coleccion de peliculas
-	const API_KEY = "2fc6f59a";
-	const query = "avengers";
+	import { onMount, onDestroy } from 'svelte';
+	import { fly } from 'svelte/transition';
+	import { store } from './stores';
+	import Demo from './components/Demo.svelte';
 
-	(async () => {
+	let data = []; // Coleccion de peliculas
+	const API_KEY = "2fsc6f59a";
+	const query = "avengers";
+	let contador = 1;
+
+	const params = {
+		API_KEY,
+		query,
+		contador,
+		data
+	};
+
+	let miRepetecion;
+	onMount(async() => {
+		// miRepetecion = setInterval(() => {
+		// 	console.log('Repitiendo');
+		// 	contador += 1;
+		// }, 1000);
 		let response = await fetch(
 			`https://www.omdbapi.com/?s=${query}&apikey=${API_KEY}&plot=full`
 		);
@@ -17,22 +35,55 @@
 			container.push(objMovie);
 			return container;
 		}, []);
+		data = response;
+		const first = data[0];
+
+		store.update(state => ({
+			...state,	
+			id: first.id,
+			url: first.url,
+			title: first.title
+		}));
 		console.log(response);
-	})();
+	});
+
+	onDestroy(() => {
+		clearInterval(miRepetecion);
+	});
+
+	const increment = () => {
+		contador += 1;
+		console.log('Click')
+	};
+
+	const decrement = () => {
+		contador -= 1;
+	};
+
+	$: esCinco = contador * 2; // Observables
+
 </script>
 
 <main>
 	<div class="loader-container">
 		<div class="loader">
-			<div />
-			<div />
-			<div />
-			<div />
-			<div />
-			<div />
-			<div />
-			<div />
+			{#each new Array(8) as miDiv }
+				<div></div>
+			{/each}
 		</div>
+		<!-- <button on:click={increment}>+</button>
+		<button on:click={decrement}>-</button>
+		{ `${contador}, esCinco: ${esCinco}` } -->
+
+		{ #if contador === 7 || contador === 8 || contador === 12 }
+			<div transition:fly="{{ y: 200, duration: 2000 }}">
+				<Demo {...params} on:click={increment}/> <!--...params - Destructuracion del objeto -->
+			</div>
+		{:else if 2 == 3}
+			<div>Es igual a 2</div>
+		{:else}
+			<div>Todo es falso</div>
+		{ /if }
 	</div>
 </main>
 
