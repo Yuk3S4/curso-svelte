@@ -1,5 +1,5 @@
 <script>
-    import { store } from '../store';
+    import { store } from '../stores';
     import { fade } from 'svelte/transition';
 
     function closeSnackbar() {

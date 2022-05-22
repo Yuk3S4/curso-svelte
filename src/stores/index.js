@@ -9,7 +9,7 @@ const state = {
     show: null, // true o false
     trailer: null,
     trailerActive: null,
-    youtube: null
+    youtube: null // true - se quiere ver el video | false - se quiere eliminarlo
 };
 
 export const store = writable(state);

@@ -1,90 +1,85 @@
 <script>
-	import { onMount, onDestroy } from 'svelte';
-	import { fly } from 'svelte/transition';
-	import { store } from './stores';
-	import Demo from './components/Demo.svelte';
+	import { onMount } from "svelte";
+	import { store } from "./stores";
+	import { fade } from 'svelte/transition';
+	import Snackbar from "./components/Snackbar.svelte";
+	import Page from "./components/Page.svelte";
+	import Thumbnail from "./components/Thumbnail.svelte";
+	import Youtube from "./components/Youtube.svelte";
 
 	let data = []; // Coleccion de peliculas
-	const API_KEY = "2fsc6f59a";
+	const API_KEY = "2fc6f59a";
 	const query = "avengers";
-	let contador = 1;
+	const videos = [
+		'9hpWz0ZMFAo',
+		'3xk11d9hjp0',
+		'n1qhwqKZ1eY',
+		'kpVsn9oQip0',
+		'SLD9xzJ4oeU',
+		'yNXfOOL8824',
+		'An_NsOddM3o',
+		'ZQpWRenGF_w',
+		'823iAZOEKt8'
+	];
 
-	const params = {
-		API_KEY,
-		query,
-		contador,
-		data
-	};
-
-	let miRepetecion;
-	onMount(async() => {
-		// miRepetecion = setInterval(() => {
-		// 	console.log('Repitiendo');
-		// 	contador += 1;
-		// }, 1000);
-		let response = await fetch(
-			`https://www.omdbapi.com/?s=${query}&apikey=${API_KEY}&plot=full`
-		);
-		response = await response.json();
-		response = [...response.Search].reduce((container, item) => {
-			const objMovie = {
-				id: item.imdbID,
-				url: item.Poster.replace("X300", ""),
-				title: item.Title,
-			};
-			container.push(objMovie);
-			return container;
-		}, []);
-		data = response;
-		const first = data[0];
-
-		store.update(state => ({
-			...state,	
-			id: first.id,
-			url: first.url,
-			title: first.title
-		}));
-		console.log(response);
+	onMount(async () => {
+		try {
+			const protocolo = window.location.protocol != 'https:' ? 'http' : 'https';
+			let response = await fetch(
+				`${protocolo}://www.omdbapi.com/?s=${query}&apikey=${API_KEY}&plot=full`
+			);
+			response = await response.json();
+			response = [...response.Search].reduce((container, item) => {
+				const objMovie = {
+					id: item.imdbID,
+					url: item.Poster.replace('X300', ''),
+					title: item.Title
+				};
+				container.push(objMovie);
+				return container;
+			}, []);
+			response = response.map((item, index) => {
+				const movie = item;
+				movie.trailer = videos[index]
+				return movie;
+			});
+			data = response;
+			const first = data[0];
+			store.update((state) => ({
+				...state,
+				id: first.id,
+				url: first.url,
+				title: first.title,
+				trailer: first.trailer
+			}));
+		} catch (error) {
+			store.update(state => ({
+				...state,
+				show: true,
+            	type: 'error',
+            	title: error.message
+			}));
+		}
 	});
-
-	onDestroy(() => {
-		clearInterval(miRepetecion);
-	});
-
-	const increment = () => {
-		contador += 1;
-		console.log('Click')
-	};
-
-	const decrement = () => {
-		contador -= 1;
-	};
-
-	$: esCinco = contador * 2; // Observables
-
 </script>
 
 <main>
-	<div class="loader-container">
-		<div class="loader">
-			{#each new Array(8) as miDiv }
-				<div></div>
-			{/each}
+	<Snackbar />
+	<Youtube />
+	{ #if data.length > 0 }
+		<div transition:fade>
+			<Page />
 		</div>
-		<!-- <button on:click={increment}>+</button>
-		<button on:click={decrement}>-</button>
-		{ `${contador}, esCinco: ${esCinco}` } -->
-
-		{ #if contador === 7 || contador === 8 || contador === 12 }
-			<div transition:fly="{{ y: 200, duration: 2000 }}">
-				<Demo {...params} on:click={increment}/> <!--...params - Destructuracion del objeto -->
+		{ :else }
+			<div class="loader-container">
+				<div class="loader">
+					{#each new Array(8) as miDiv}
+						<div></div>
+					{/each}
+				</div>
 			</div>
-		{:else if 2 == 3}
-			<div>Es igual a 2</div>
-		{:else}
-			<div>Todo es falso</div>
-		{ /if }
-	</div>
+	{/if }
+	<Thumbnail {data} />	
 </main>
 
 <style>
